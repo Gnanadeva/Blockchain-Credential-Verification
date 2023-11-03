@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            max-width: 600px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container h2 {
+            color: #333;
+        }
+
+        .form-group {
+            text-align: left;
+            margin: 10px 0;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .form-group button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .form-group button:hover {
+            background-color: #0056b3;
+        }
+
+        .logo {
+            max-width: 100px;
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="img.png" alt="Your Logo" class="logo">
+        <h2>Student Dashboard</h2>
+
+        <div class="form-group">
+            <label for="certificate">Upload Certificate</label>
+            <input type="file" id="certificate" accept=".pdf, .doc, .docx">
+        </div>
+
+        <div class="form-group">
+            <button onclick="generateHashAndStore()">Generate Hash</button>
+        </div>
+
+        <div id="hash-result"></div>
+
+        <div class="form-group">
+            <button onclick="shareWithEmail()">Share via Email</button>
+            <button onclick="shareWithWhatsApp()">Share via WhatsApp</button>
+        </div>
+    </div>
+
+    <script>
+        const contractAddress = '0xYourContractAddress'; // Replace with your smart contract address in Ganache
+        const abi = [...]; // Replace with your smart contract's ABI
+
+        const web3 = new Web3('http://localhost:7545'); // Ganache's RPC URL
+        const contract = new web3.eth.Contract(abi, contractAddress);
+
+        async function generateHashAndStore() {
+            const fileInput = document.getElementById('certificate');
+            const certificateFile = fileInput.files[0];
+
+            if (certificateFile) {
+                const reader = new FileReader();
+
+                reader.onload = async function (event) {
+                    const fileContent = event.target.result;
+                    const certificateHash = web3.utils.sha3(fileContent);
+
+                    // Send the hash to the smart contract to store it
+                    const accounts = await web3.eth.getAccounts();
+                    const result = await contract.methods.storeCertificateHash(certificateHash).send({
+                        from: accounts[0], // Use the sender's Ethereum address
+                    });
+
+                    console.log('Certificate hash stored in Ganache:', result);
+                };
+
+                reader.readAsText(certificateFile);
+            } else {
+                alert('Please select a valid file to generate a hash and store it in Ganache.');
+            }
+        }
+        function shareWithEmail() {
+            const hashResult = document.getElementById('hash-result').textContent;
+            const subject = 'Certificate Hash';
+            const body = `Check out this certificate hash: ${hashResult}`;
+            const emailLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(emailLink, '_blank');
+        }
+
+        function shareWithWhatsApp() {
+            const hashResult = document.getElementById('hash-result').textContent;
+            const text = `Check out this certificate hash: ${hashResult}`;
+            const whatsappLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(whatsappLink, '_blank');
+        }
+    </script>
+</body>
+</html>
